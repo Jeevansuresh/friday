@@ -88,7 +88,7 @@ async def execute_sql(
 
         command = sql.strip().split(maxsplit=1)[0].upper()
 
-        if command == "SELECT":
+        if command in ("SELECT", "WITH"):
             rows = await conn.fetch(sql, *parameters)
             print("\n====== DB SELECT ROWS ======")
             for r in rows:
