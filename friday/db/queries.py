@@ -205,4 +205,32 @@ async def delete_food_item(food_item_id: int) -> bool:
             if remaining == 0:
                 await conn.execute("DELETE FROM meals WHERE id = $1", meal_id)
 
-            return True
+            return True
+
+
+async def get_remaining_calories() -> float | None:
+    """
+    Calculates remaining calories for today based on current goal target
+    and today's logged food items. Returns None if target is not set.
+    """
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        # Get today's calorie target
+        target = await conn.fetchval(
+            """
+            SELECT target_value FROM current_goals WHERE goal_name = 'calories'
+            """
+        )
+        if target is None:
+            return None
+
+        # Sum today's logged calories
+        logged = await conn.fetchval(
+            """
+            SELECT COALESCE(SUM(fi.calories), 0)
+            FROM food_items fi
+            JOIN meals m ON m.id = fi.meal_id
+            WHERE m.meal_date = CURRENT_DATE AND m.status = 'logged'
+            """
+        )
+        return float(target) - float(logged)

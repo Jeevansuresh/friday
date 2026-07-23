@@ -5,7 +5,7 @@ from friday.db.models import (
     IntentType,
     PendingClarification,
 )
-from friday.db.queries import delete_food_item, execute_sql, get_todays_food_items, save_meal
+from friday.db.queries import delete_food_item, execute_sql, get_remaining_calories, get_todays_food_items, save_meal
 
 
 class Router:
@@ -48,9 +48,13 @@ class Router:
                 food_summary = ", ".join(
                     f"{f.quantity} {f.unit} {f.name}" for f in estimate.foods
                 )
+                
+                remaining = await get_remaining_calories()
+                remaining_str = f" Remaining calories today: {remaining:.0f} kcal." if remaining is not None else ""
+                
                 return (
                     f"Logged meal ({estimate.meal_type.value}): {food_summary} "
-                    f"(~{estimate.total_calories:.0f} kcal, {estimate.total_protein_g:.1f}g protein)."
+                    f"(~{estimate.total_calories:.0f} kcal, {estimate.total_protein_g:.1f}g protein).{remaining_str}"
                 ), None
 
             case (
@@ -176,7 +180,11 @@ class Router:
         food_summary = ", ".join(
             f"{f.quantity} {f.unit} {f.name}" for f in estimate.foods
         )
+        
+        remaining = await get_remaining_calories()
+        remaining_str = f" Remaining calories today: {remaining:.0f} kcal." if remaining is not None else ""
+        
         return (
             f"Logged meal ({estimate.meal_type.value}): {food_summary} "
-            f"(~{estimate.total_calories:.0f} kcal, {estimate.total_protein_g:.1f}g protein)."
+            f"(~{estimate.total_calories:.0f} kcal, {estimate.total_protein_g:.1f}g protein).{remaining_str}"
         ), None
