@@ -37,3 +37,8 @@ Rules
 - Use CURRENT_DATE and PostgreSQL date functions for relative dates when appropriate.
 - If the request cannot be answered from the schema, return success=false.
 - Return ONLY valid JSON.
+- **For general stats, performance summaries, or "stats today" queries**: Ensure you fetch and return columns/subqueries covering:
+  1. Food/nutrition totals (calories, protein, carbs, fat, fiber).
+  2. Steps and walking calories (from daily_metrics).
+  3. Today's workout details (targeted muscles, is_rest_day, notes).
+  Use CTEs or subqueries to combine this information into one SELECT statement so all three domains are populated.
