@@ -5,7 +5,7 @@ from friday.db.models import (
     IntentType,
     PendingClarification,
 )
-from friday.db.queries import execute_sql, save_meal
+from friday.db.queries import delete_food_item, execute_sql, get_todays_food_items, save_meal
 
 
 class Router:
@@ -87,6 +87,30 @@ class Router:
                         retry.action.sql,
                         retry.action.parameters,
                     ), None
+
+            case IntentType.FOOD_DELETE_LIST:
+                items = await get_todays_food_items()
+                if not items:
+                    return "No food items logged today yet.", None
+
+                lines = ["Here are your logged foods for today:"]
+                for item in items:
+                    lines.append(
+                        f"**ID: `{item['id']}`** | {item['meal_type'].capitalize()}: "
+                        f"{item['food_name']} ({item['quantity_desc']}, {item['calories']:.0f} kcal, {item['protein_g']:.1f}g protein)"
+                    )
+                lines.append("\nType `/delete <ID>` to remove an item.")
+                return "\n".join(lines), None
+
+            case IntentType.FOOD_DELETE_EXECUTE:
+                if intent.target_food_id is None:
+                    return "Please specify a valid food ID to delete. Format: `/delete <ID>`.", None
+
+                success = await delete_food_item(intent.target_food_id)
+                if success:
+                    return f"Successfully deleted food item with ID `{intent.target_food_id}`. You can now log your corrected meal normally.", None
+                else:
+                    return f"Could not find a logged food item with ID `{intent.target_food_id}`.", None
 
             case IntentType.WORKOUT_LOG:
                 return "Workout logging not implemented yet.", None

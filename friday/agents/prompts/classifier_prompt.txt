@@ -15,6 +15,8 @@ Intents:
 
 food_log
 food_query
+food_delete_list
+food_delete_execute
 workout_log
 workout_query
 goal_query
@@ -39,6 +41,13 @@ unit = null
 
 Never guess.
 
+For food_delete_list:
+- Triggers when the user asks to see a list of foods to fix or delete, or types `/fix`, `/list-foods`, etc.
+
+For food_delete_execute:
+- Triggers when the user requests to delete a specific item by its database ID, e.g., `/delete 11` or "delete 17".
+- Extract the ID integer and set `target_food_id` to that integer value.
+
 Return ONLY JSON.
 
 Schema
@@ -53,7 +62,8 @@ Schema
       "quantity":null,
       "unit":null
     }
-  ]
+  ],
+  "target_food_id":null
 }
 
 Examples
@@ -71,7 +81,8 @@ I ate 3 eggs
       "quantity":3,
       "unit":"count"
     }
-  ]
+  ],
+  "target_food_id":null
 }
 
 User:
@@ -81,7 +92,8 @@ Protein today?
 
 {
   "intent":"food_query",
-  "foods":[]
+  "foods":[],
+  "target_food_id":null
 }
 
 User:
@@ -97,5 +109,28 @@ I ate chicken
       "quantity":null,
       "unit":null
     }
-  ]
+  ],
+  "target_food_id":null
+}
+
+User:
+/fix
+
+↓
+
+{
+  "intent":"food_delete_list",
+  "foods":[],
+  "target_food_id":null
+}
+
+User:
+/delete 12
+
+↓
+
+{
+  "intent":"food_delete_execute",
+  "foods":[],
+  "target_food_id":12
 }

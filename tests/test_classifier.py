@@ -1,54 +1,22 @@
-import asyncio
-
+import pytest
 from friday.agents.classifier import Classifier
+from friday.db.models import IntentType
 
-
-TESTS = [
-
-    "I ate 3 eggs",
-
-    "Today lunch chicken gravy",
-
-    "Actually make it 4 eggs",
-
-    "Protein today?",
-
-    "Calories yesterday?",
-
-    "Calories left?",
-
-    "Push day done",
-
-    "Today I trained chest and biceps",
-
-    "Did I train legs?",
-
-    "What muscle group did I miss?",
-
-    "What's my protein goal?",
-
-    "What's my calorie target?",
-
-    "Should I bulk?",
-
-    "How do I gain muscle?",
-]
-
-
-async def main():
-
+@pytest.mark.anyio
+async def test_classify_food_delete_list():
     classifier = Classifier()
+    result = await classifier.classify(context=[], message="/fix")
+    assert result.intent == IntentType.FOOD_DELETE_LIST
 
-    for query in TESTS:
+@pytest.mark.anyio
+async def test_classify_food_delete_execute():
+    classifier = Classifier()
+    result = await classifier.classify(context=[], message="/delete 12")
+    assert result.intent == IntentType.FOOD_DELETE_EXECUTE
+    assert result.target_food_id == 12
 
-        result = await classifier.classify(
-            context=[],
-            message=query,
-        )
-
-        print("=" * 60)
-        print(query)
-        print(result.model_dump())
-
-
-asyncio.run(main())
+@pytest.mark.anyio
+async def test_classify_food_log():
+    classifier = Classifier()
+    result = await classifier.classify(context=[], message="I had 2 eggs")
+    assert result.intent == IntentType.FOOD_LOG

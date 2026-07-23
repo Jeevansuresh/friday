@@ -35,6 +35,8 @@ class ConversationTurn(BaseModel):
 class IntentType(str, Enum):
     FOOD_LOG = "food_log"
     FOOD_QUERY = "food_query"
+    FOOD_DELETE_LIST = "food_delete_list"
+    FOOD_DELETE_EXECUTE = "food_delete_execute"
     WORKOUT_LOG = "workout_log"
     WORKOUT_QUERY = "workout_query"
     GOAL_QUERY = "goal_query"
@@ -57,6 +59,7 @@ class ClassifiedIntent(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str | None = None
     foods: list[FoodMention] = Field(default_factory=list)
+    target_food_id: int | None = None
 
 
 # ------------------------------------------------------------------

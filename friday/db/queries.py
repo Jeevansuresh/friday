@@ -159,4 +159,50 @@ async def save_meal(
                     food.fiber_g,
                 )
 
-            return meal_id
+            return meal_id
+
+
+async def get_todays_food_items() -> list[dict]:
+    """
+    Returns a list of all food items logged today, including their DB IDs, names,
+    quantities, and meal types, so they can be shown to the user.
+    """
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT fi.id, m.meal_type, fi.food_name, fi.quantity_desc, fi.calories, fi.protein_g
+            FROM food_items fi
+            JOIN meals m ON m.id = fi.meal_id
+            WHERE m.meal_date = CURRENT_DATE
+            ORDER BY m.meal_type, fi.id
+            """
+        )
+        return [dict(row) for row in rows]
+
+
+async def delete_food_item(food_item_id: int) -> bool:
+    """
+    Deletes a specific food item by its ID.
+    If the parent meal has no food items left, deletes the meal too.
+    """
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            meal_id = await conn.fetchval(
+                "SELECT meal_id FROM food_items WHERE id = $1",
+                food_item_id
+            )
+            if not meal_id:
+                return False
+
+            await conn.execute("DELETE FROM food_items WHERE id = $1", food_item_id)
+
+            remaining = await conn.fetchval(
+                "SELECT COUNT(*) FROM food_items WHERE meal_id = $1",
+                meal_id
+            )
+            if remaining == 0:
+                await conn.execute("DELETE FROM meals WHERE id = $1", meal_id)
+
+            return True
