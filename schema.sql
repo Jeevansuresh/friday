@@ -91,6 +91,8 @@ INSERT INTO muscle_groups (name, sort_order) VALUES
 -- 5. workouts
 -- One row per day. is_rest_day folds "rest day" logging in here
 -- instead of a separate table.
+-- To query workout details, always join workout_muscle_groups and muscle_groups
+-- to see which muscle groups were targeted.
 -- ------------------------------------------------------------
 CREATE TABLE workouts (
     id            BIGSERIAL PRIMARY KEY,
@@ -107,6 +109,12 @@ CREATE INDEX idx_workouts_date ON workouts (workout_date);
 -- 6. workout_muscle_groups
 -- Join table. "Push day" expands into 3 rows (chest/shoulders/triceps)
 -- against one workout row.
+-- Example query: 
+-- SELECT w.workout_date, array_agg(mg.name) as targeted_muscles 
+-- FROM workouts w 
+-- LEFT JOIN workout_muscle_groups wmg ON w.id = wmg.workout_id 
+-- LEFT JOIN muscle_groups mg ON wmg.muscle_group_id = mg.id 
+-- GROUP BY w.id;
 -- ------------------------------------------------------------
 CREATE TABLE workout_muscle_groups (
     id                BIGSERIAL PRIMARY KEY,
