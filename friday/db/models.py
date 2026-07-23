@@ -39,6 +39,7 @@ class IntentType(str, Enum):
     FOOD_DELETE_EXECUTE = "food_delete_execute"
     WORKOUT_LOG = "workout_log"
     WORKOUT_QUERY = "workout_query"
+    STEP_LOG = "step_log"
     GOAL_QUERY = "goal_query"
     COACHING = "coaching"
     UNKNOWN = "unknown"
@@ -60,6 +61,9 @@ class ClassifiedIntent(BaseModel):
     reasoning: str | None = None
     foods: list[FoodMention] = Field(default_factory=list)
     target_food_id: int | None = None
+    workout_muscle_groups: list[str] = Field(default_factory=list)
+    is_rest_day: bool = False
+    steps: int | None = None
 
 
 # ------------------------------------------------------------------

@@ -5,7 +5,7 @@ from friday.db.models import (
     IntentType,
     PendingClarification,
 )
-from friday.db.queries import delete_food_item, execute_sql, get_remaining_calories, get_todays_food_items, save_meal
+from friday.db.queries import delete_food_item, execute_sql, get_remaining_calories, get_todays_food_items, save_meal, save_steps, save_workout
 
 
 class Router:
@@ -117,7 +117,19 @@ class Router:
                     return f"Could not find a logged food item with ID `{intent.target_food_id}`.", None
 
             case IntentType.WORKOUT_LOG:
-                return "Workout logging not implemented yet.", None
+                await save_workout(intent.workout_muscle_groups, intent.is_rest_day)
+                if intent.is_rest_day:
+                    return "Logged today as a rest day! Enjoy your recovery. 🛋️", None
+                
+                mg_str = ", ".join(intent.workout_muscle_groups)
+                return f"Logged today's workout targeting: {mg_str}. Keep crushing it! 💪", None
+
+            case IntentType.STEP_LOG:
+                if intent.steps is None:
+                    return "Could not extract step count from your message.", None
+                
+                await save_steps(intent.steps)
+                return f"Logged {intent.steps} steps for today. 🚶 Great work staying active!", None
 
             case IntentType.COACHING:
                 return "Coaching not implemented yet.", None

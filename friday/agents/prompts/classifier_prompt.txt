@@ -19,6 +19,7 @@ food_delete_list
 food_delete_execute
 workout_log
 workout_query
+step_log
 goal_query
 coaching
 unknown
@@ -48,6 +49,15 @@ For food_delete_execute:
 - Triggers when the user requests to delete a specific item by its database ID, e.g., `/delete 11` or "delete 17".
 - Extract the ID integer and set `target_food_id` to that integer value.
 
+For workout_log:
+- Triggers when the user logs their workout exercises, target muscle groups, or says today is a rest day.
+- Extract target muscle groups into `workout_muscle_groups` (as a list of strings, matching capitalization of: Chest, Back, Shoulders, Biceps, Triceps, Legs).
+- Set `is_rest_day` to true if they specifically mention a rest day, break day, or active recovery.
+
+For step_log:
+- Triggers when the user logs their daily step count (e.g., "6994 steps today", "walked 10k steps").
+- Extract the number of steps into `steps` as an integer.
+
 Return ONLY JSON.
 
 Schema
@@ -63,7 +73,10 @@ Schema
       "unit":null
     }
   ],
-  "target_food_id":null
+  "target_food_id":null,
+  "workout_muscle_groups":[],
+  "is_rest_day":false,
+  "steps":null
 }
 
 Examples
@@ -82,7 +95,10 @@ I ate 3 eggs
       "unit":"count"
     }
   ],
-  "target_food_id":null
+  "target_food_id":null,
+  "workout_muscle_groups":[],
+  "is_rest_day":false,
+  "steps":null
 }
 
 User:
@@ -93,44 +109,50 @@ Protein today?
 {
   "intent":"food_query",
   "foods":[],
-  "target_food_id":null
+  "target_food_id":null,
+  "workout_muscle_groups":[],
+  "is_rest_day":false,
+  "steps":null
 }
 
 User:
-I ate chicken
+I worked out my chest, triceps and shoulders today
 
 ↓
 
 {
-  "intent":"food_log",
-  "foods":[
-    {
-      "name":"chicken",
-      "quantity":null,
-      "unit":null
-    }
-  ],
-  "target_food_id":null
-}
-
-User:
-/fix
-
-↓
-
-{
-  "intent":"food_delete_list",
+  "intent":"workout_log",
   "foods":[],
-  "target_food_id":null
+  "target_food_id":null,
+  "workout_muscle_groups":["Chest", "Triceps", "Shoulders"],
+  "is_rest_day":false,
+  "steps":null
 }
 
 User:
-/delete 12
+also I did 6994 steps today
 
 ↓
 
 {
-  "intent":"food_delete_execute",
+  "intent":"step_log",
   "foods":[],
-  "target_food_id":12
+  "target_food_id":null,
+  "workout_muscle_groups":[],
+  "is_rest_day":false,
+  "steps":6994
+}
+
+User:
+today is rest day
+
+↓
+
+{
+  "intent":"workout_log",
+  "foods":[],
+  "target_food_id":null,
+  "workout_muscle_groups":[],
+  "is_rest_day":true,
+  "steps":null
 }

@@ -183,3 +183,20 @@ FROM goals g
 JOIN goal_types gt ON gt.id = g.goal_type_id
 WHERE g.effective_from <= CURRENT_DATE
 ORDER BY g.goal_type_id, g.effective_from DESC;
+
+
+-- ------------------------------------------------------------
+-- 10. daily_metrics
+-- Track daily step counts.
+-- Calculation note for LLM/SQL Generator:
+-- walking calories burned = steps * 0.04 kcal
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS daily_metrics (
+    id          BIGSERIAL PRIMARY KEY,
+    metric_date DATE NOT NULL UNIQUE,
+    steps       INT NOT NULL DEFAULT 0,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_metrics_date ON daily_metrics (metric_date);

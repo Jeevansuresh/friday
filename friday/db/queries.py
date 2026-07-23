@@ -233,4 +233,59 @@ async def get_remaining_calories() -> float | None:
             WHERE m.meal_date = CURRENT_DATE AND m.status = 'logged'
             """
         )
-        return float(target) - float(logged)
+        return float(target) - float(logged)
+
+
+async def save_workout(muscle_groups: list[str], is_rest_day: bool) -> None:
+    """
+    Saves a workout to the workouts table and maps muscle groups.
+    Updates if a workout row for today already exists.
+    """
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            workout_id = await conn.fetchval(
+                """
+                INSERT INTO workouts (workout_date, is_rest_day)
+                VALUES (CURRENT_DATE, $1)
+                ON CONFLICT (workout_date) 
+                DO UPDATE SET is_rest_day = EXCLUDED.is_rest_day
+                RETURNING id
+                """,
+                is_rest_day
+            )
+
+            await conn.execute("DELETE FROM workout_muscle_groups WHERE workout_id = $1", workout_id)
+
+            if not is_rest_day:
+                for mg_name in muscle_groups:
+                    mg_id = await conn.fetchval(
+                        "SELECT id FROM muscle_groups WHERE LOWER(name) = LOWER($1)",
+                        mg_name
+                    )
+                    if mg_id:
+                        await conn.execute(
+                            """
+                            INSERT INTO workout_muscle_groups (workout_id, muscle_group_id)
+                            VALUES ($1, $2)
+                            ON CONFLICT DO NOTHING
+                            """,
+                            workout_id, mg_id
+                        )
+
+
+async def save_steps(steps: int) -> None:
+    """
+    Saves steps for today in the daily_metrics table.
+    """
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            INSERT INTO daily_metrics (metric_date, steps)
+            VALUES (CURRENT_DATE, $1)
+            ON CONFLICT (metric_date)
+            DO UPDATE SET steps = EXCLUDED.steps, updated_at = now()
+            """,
+            steps
+        )
