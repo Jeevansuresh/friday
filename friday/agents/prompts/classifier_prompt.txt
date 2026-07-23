@@ -62,6 +62,10 @@ For step_log:
 For step_query:
 - Triggers when the user asks questions or queries about their steps, walking calories burned, or step trends (e.g., "how many steps did I do this week", "average steps").
 
+For food_query:
+- Triggers when the user asks questions or queries about their food intake, calorie consumption, or macros (e.g., "how much protein did I eat today?", "what was my breakfast").
+- Also triggers for general daily/weekly stats, summary, or performance questions (e.g., "what are my stats today", "summarize my performance today").
+
 Return ONLY JSON.
 
 Schema
