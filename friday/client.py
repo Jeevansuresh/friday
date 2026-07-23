@@ -31,6 +31,8 @@ class FridayClient(discord.Client):
 
     async def on_ready(self):
         print(f"Logged in as {self.user} ({self.user.id})")
+        from friday.notifications.scheduler import start_scheduler
+        start_scheduler(self)
 
     async def on_message(self, message: discord.Message):
         try:
