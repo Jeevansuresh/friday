@@ -10,10 +10,16 @@ async def main() -> None:
         data = await agent.get_today_coaching_data()
         print(data)
         print("\n" + "=" * 50)
-        print("Generated Coaching Tip:")
+        print("Generated Daily Coaching Tip:")
         print("=" * 50)
         tip = await agent.generate_daily_tip()
         print(tip)
+        
+        print("\n" + "=" * 50)
+        print("Generated Weekly Coaching Tip:")
+        print("=" * 50)
+        weekly_tip = await agent.generate_weekly_tip()
+        print(weekly_tip)
     finally:
         await close_pool()
 

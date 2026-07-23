@@ -17,6 +17,12 @@ PROMPT = (
     / "coaching_prompt.txt"
 ).read_text(encoding="utf-8")
 
+WEEKLY_PROMPT = (
+    Path(__file__).parent
+    / "prompts"
+    / "weekly_coaching_prompt.txt"
+).read_text(encoding="utf-8")
+
 
 class CoachingAgent:
 
@@ -81,7 +87,7 @@ class CoachingAgent:
                     "is_rest_day": workout["is_rest_day"] if workout else True,
                     "muscle_groups": muscle_groups,
                     "notes": workout["notes"] if workout else None
-                } if workout else None
+                }
             }
 
     async def generate_daily_tip(self) -> str:
@@ -99,6 +105,100 @@ Workout Details: {data['workout']}
             model=settings.azure_openai_deployment_main,
             input=[
                 {"role": "system", "content": PROMPT},
+                {"role": "user", "content": user_content}
+            ],
+            temperature=0.7,
+        )
+        return response.output_text.strip()
+
+    async def get_weekly_coaching_data(self) -> dict:
+        pool = get_pool()
+        async with pool.acquire() as conn:
+            # 1. Fetch Goals
+            goals = await conn.fetch("SELECT * FROM current_goals")
+            goals_dict = {row["goal_name"]: float(row["target_value"]) for row in goals}
+
+            # 2. Daily nutrition totals for last 7 days
+            nutrition_history = await conn.fetch(
+                """
+                SELECT 
+                    m.meal_date,
+                    COALESCE(SUM(fi.calories), 0) AS calories,
+                    COALESCE(SUM(fi.protein_g), 0) AS protein
+                FROM meals m
+                LEFT JOIN food_items fi ON m.id = fi.meal_id
+                WHERE m.meal_date >= CURRENT_DATE - INTERVAL '6 days' 
+                  AND m.meal_date <= CURRENT_DATE
+                  AND m.status = 'logged'
+                GROUP BY m.meal_date
+                ORDER BY m.meal_date
+                """
+            )
+
+            # 3. Daily step counts for last 7 days
+            steps_history = await conn.fetch(
+                """
+                SELECT metric_date, steps
+                FROM daily_metrics
+                WHERE metric_date >= CURRENT_DATE - INTERVAL '6 days'
+                  AND metric_date <= CURRENT_DATE
+                ORDER BY metric_date
+                """
+            )
+
+            # 4. Workouts logged in the last 7 days
+            workout_rows = await conn.fetch(
+                """
+                SELECT w.id, w.workout_date, w.is_rest_day
+                FROM workouts w
+                WHERE w.workout_date >= CURRENT_DATE - INTERVAL '6 days'
+                  AND w.workout_date <= CURRENT_DATE
+                ORDER BY w.workout_date
+                """
+            )
+            
+            workouts_history = []
+            for row in workout_rows:
+                muscle_groups = []
+                if not row["is_rest_day"]:
+                    mg_rows = await conn.fetch(
+                        """
+                        SELECT mg.name 
+                        FROM workout_muscle_groups wmg
+                        JOIN muscle_groups mg ON wmg.muscle_group_id = mg.id
+                        WHERE wmg.workout_id = $1
+                        """,
+                        row["id"]
+                    )
+                    muscle_groups = [r["name"] for r in mg_rows]
+                
+                workouts_history.append({
+                    "workout_date": str(row["workout_date"]),
+                    "is_rest_day": row["is_rest_day"],
+                    "muscle_groups": muscle_groups
+                })
+
+            return {
+                "goals": goals_dict,
+                "nutrition_history": [dict(r) for r in nutrition_history],
+                "steps_history": [dict(r) for r in steps_history],
+                "workouts_history": workouts_history
+            }
+
+    async def generate_weekly_tip(self) -> str:
+        data = await self.get_weekly_coaching_data()
+        
+        user_content = f"""Weekly Stats (Last 7 Days, ending {date.today()}):
+Goals: {data['goals']}
+Daily Nutrition: {data['nutrition_history']}
+Daily Steps: {data['steps_history']}
+Logged Workouts: {data['workouts_history']}
+"""
+
+        response = client.responses.create(
+            model=settings.azure_openai_deployment_main,
+            input=[
+                {"role": "system", "content": WEEKLY_PROMPT},
                 {"role": "user", "content": user_content}
             ],
             temperature=0.7,
