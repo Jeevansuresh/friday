@@ -132,3 +132,17 @@ class Meal(BaseModel):
     meal_date: date
     meal_type: MealType
     status: MealStatus = MealStatus.LOGGED
+
+
+# ------------------------------------------------------------------
+# Clarification state
+# ------------------------------------------------------------------
+
+class PendingClarification(BaseModel):
+    """
+    Saved state from a turn where the nutrient estimator asked for
+    clarification. Held in memory on FridayClient between turns.
+    """
+    original_message: str               # the user's full original meal message
+    foods: list[FoodMention]            # classifier's original food extractions
+    clarification_question: str         # what the bot asked

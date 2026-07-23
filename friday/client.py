@@ -6,6 +6,7 @@ from friday.agents.classifier import Classifier
 from friday.agents.response_composer import ResponseComposer
 from friday.agents.router import Router
 from friday.context.loader import ContextLoader
+from friday.db.models import PendingClarification
 
 
 class FridayClient(discord.Client):
@@ -24,6 +25,9 @@ class FridayClient(discord.Client):
         self.classifier = Classifier()
         self.router = Router()
         self.composer = ResponseComposer()
+
+        # Holds state when the nutrient estimator needs a clarification answer
+        self.pending_clarification: PendingClarification | None = None
 
     async def on_ready(self):
         print(f"Logged in as {self.user} ({self.user.id})")
@@ -66,26 +70,37 @@ class FridayClient(discord.Client):
             print("=====================")
 
             # --------------------------------------------------
-            # STEP 3: Classify
+            # STEP 3 & 4: Classify + Route
+            # If a clarification answer is pending, bypass the
+            # classifier and feed the answer directly to the router.
             # --------------------------------------------------
 
-            intent = await self.classifier.classify(
-                context=history,
-                message=message.content,
-            )
+            if self.pending_clarification is not None:
+                print("\n====== CLARIFICATION TURN ======")
+                print(f"Pending: {self.pending_clarification.clarification_question}")
+                print("================================")
 
-            print("\n====== CLASSIFIER ======")
-            print(intent.model_dump())
-            print("========================")
+                result, new_pending = await self.router.route_clarification(
+                    answer=message.content,
+                    pending=self.pending_clarification,
+                )
+                self.pending_clarification = new_pending
 
-            # --------------------------------------------------
-            # STEP 4: Route
-            # --------------------------------------------------
+            else:
+                intent = await self.classifier.classify(
+                    context=history,
+                    message=message.content,
+                )
 
-            result = await self.router.route(
-                message=message.content,
-                intent=intent,
-            )
+                print("\n====== CLASSIFIER ======")
+                print(intent.model_dump())
+                print("========================")
+
+                result, new_pending = await self.router.route(
+                    message=message.content,
+                    intent=intent,
+                )
+                self.pending_clarification = new_pending
 
             print("\n======== ROUTER ========")
             print(result)
