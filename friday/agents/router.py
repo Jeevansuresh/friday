@@ -61,6 +61,7 @@ class Router:
                 IntentType.FOOD_QUERY
                 | IntentType.WORKOUT_QUERY
                 | IntentType.GOAL_QUERY
+                | IntentType.STEP_QUERY
             ):
 
                 result = await self.sql_generator.generate(

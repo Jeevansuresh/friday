@@ -20,6 +20,7 @@ food_delete_execute
 workout_log
 workout_query
 step_log
+step_query
 goal_query
 coaching
 unknown
@@ -57,6 +58,9 @@ For workout_log:
 For step_log:
 - Triggers when the user logs their daily step count (e.g., "6994 steps today", "walked 10k steps").
 - Extract the number of steps into `steps` as an integer.
+
+For step_query:
+- Triggers when the user asks questions or queries about their steps, walking calories burned, or step trends (e.g., "how many steps did I do this week", "average steps").
 
 Return ONLY JSON.
 

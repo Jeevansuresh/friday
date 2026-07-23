@@ -77,6 +77,11 @@ async def execute_sql(
 
     parameters = parameters or []
 
+    print("\n====== DB SQL EXECUTION ======")
+    print(f"SQL:        {sql}")
+    print(f"Parameters: {parameters}")
+    print("==============================\n")
+
     pool = get_pool()
 
     async with pool.acquire() as conn:
@@ -84,9 +89,16 @@ async def execute_sql(
         command = sql.strip().split(maxsplit=1)[0].upper()
 
         if command == "SELECT":
-            return await conn.fetch(sql, *parameters)
+            rows = await conn.fetch(sql, *parameters)
+            print("\n====== DB SELECT ROWS ======")
+            for r in rows:
+                print(dict(r))
+            print("============================\n")
+            return rows
 
-        return await conn.execute(sql, *parameters)
+        res = await conn.execute(sql, *parameters)
+        print(f"\n====== DB EXECUTE RESULT ======\n{res}\n==============================\n")
+        return res
 
 
 async def save_meal(

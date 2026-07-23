@@ -40,6 +40,7 @@ class IntentType(str, Enum):
     WORKOUT_LOG = "workout_log"
     WORKOUT_QUERY = "workout_query"
     STEP_LOG = "step_log"
+    STEP_QUERY = "step_query"
     GOAL_QUERY = "goal_query"
     COACHING = "coaching"
     UNKNOWN = "unknown"
