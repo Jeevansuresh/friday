@@ -35,6 +35,7 @@ Rules
 - Use PostgreSQL syntax.
 - Use aggregate functions for totals.
 - Use CURRENT_DATE and PostgreSQL date functions for relative dates when appropriate.
+- Default queries about foods, calories, macros/nutrients, steps, or workouts to the current date (e.g. `meal_date = CURRENT_DATE` or `metric_date = CURRENT_DATE` or `workout_date = CURRENT_DATE`) unless a specific alternative date (e.g. "on July 20th"), relative date (e.g. "yesterday", "three days ago"), or timeframe (e.g. "this week", "last 7 days") is explicitly mentioned.
 - If the request cannot be answered from the schema, return success=false.
 - Return ONLY valid JSON.
 - **For general stats, performance summaries, or "stats today" queries**: Ensure you fetch and return columns/subqueries covering:
